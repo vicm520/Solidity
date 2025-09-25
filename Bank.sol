@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0;
 
 contract Bank {
-    address public immutable owner;
+    address public owner;
     // 记录每个地址的累计存款金额
     mapping (address => uint) public deposits;
     // 存储前 3 位存款用户
@@ -61,5 +61,6 @@ contract Bank {
         return firstThreeDepositors;
     }
     
+
 
 }
