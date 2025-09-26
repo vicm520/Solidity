@@ -1,14 +1,17 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+interface IBank {
+    function withdraw(uint256 amount) external;
+    function depositRecord() external payable;
+}
+
 contract Bank {
     address public owner;
     // 记录每个地址的累计存款金额
     mapping (address => uint) public deposits;
     // 存储前 3 位存款用户
     address[3] public firstThreeDepositors;
-    // 记录一个地址是否曾经存款过（用于唯一性判断）
-    mapping(address => bool) private hasDepositedBefore;
     // 计数器
     uint8 public firstDepositorCount;
     
@@ -19,30 +22,33 @@ contract Bank {
 
     // 通过 Metamask 等钱包直接给银行合约地址
     receive() external payable {
-        depositRecord(msg.sender,msg.value);
+        depositRecord();
+    }
+    fallback() external {
+
+    }
+
+    modifier onlyOwner {
+        require(owner == msg.sender, "Illegal permission"); 
+        _;
     }
     
     // 记录存款信息
-    function depositRecord(address from, uint256 amount) internal { 
+    function depositRecord() public payable virtual { 
         
         // 累计到用户存储金额
-        deposits[from] += amount;
+        deposits[msg.sender] += msg.value;
         // 当该用户为第一次存款
-        if (!hasDepositedBefore[from] && firstDepositorCount < 3) {
-            hasDepositedBefore[from] = true;
-            firstThreeDepositors[firstDepositorCount] = from;
+        if (deposits[msg.sender] == 0 && firstDepositorCount < 3) {
+            firstThreeDepositors[firstDepositorCount] = msg.sender;
             firstDepositorCount += 1;
-        } else if (!hasDepositedBefore[from]) {
-            // 即使超过前三名，也标记为已出现，避免重复判断
-            hasDepositedBefore[from] = true;
-        }
+        } 
     }
 
 
     // 取款方法
-    function withdraw(uint256 amount) public {
+    function withdraw(uint256 amount) public onlyOwner{
         // 数据处理
-        require(owner == msg.sender, "Illegal permission"); 
         require(amount > 0, "The amount is illegal");
         require(address(this).balance >= amount, "Insufficient balance");
         (bool success, ) = msg.sender.call{value:  amount}("");
@@ -62,5 +68,29 @@ contract Bank {
     }
     
 
+}
+
+
+contract BigBank is Bank {
+    uint256 public constant MIN_DEPOSIT = 1000000000000000;
+
+    modifier VerifyTheAmount{
+        require(msg.value > MIN_DEPOSIT, "Amount must be > 0.001 ether"); 
+        _;
+    }
+
+    // 限制支付最小金额
+    function depositRecord() public payable override VerifyTheAmount {
+        super.depositRecord();
+    }
+
+    // 转移管理员
+    function transferOwner(address toAddress) public onlyOwner {
+        require(toAddress != address(0), "cannot be an empty address"); 
+        require(toAddress != owner, "Cannot be transferred to oneself"); 
+        owner = toAddress;
+    } 
 
 }
+
+
