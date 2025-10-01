@@ -135,23 +135,15 @@ contract Bank {
     }
 
 
-    // 取款方法
+    // 取款方法 - 管理员从合约余额中取款
     function withdraw(uint256 amount) public onlyOwner{
         // 数据处理
         require(amount > 0, "The amount is illegal");
         require(address(this).balance >= amount, "Insufficient balance");
 
-        // 记录取款前的余额
-        uint256 previousBalance = deposits[msg.sender];
-        (bool success, ) = msg.sender.call{value:  amount}("");
+        // 直接从合约余额中取款，不影响任何用户的存款记录
+        (bool success, ) = msg.sender.call{value: amount}("");
         require(success, "Failed to send Ether");
-
-        // 更新存款记录
-        deposits[msg.sender] -= amount;
-        uint256 newBalance = deposits[msg.sender];
-        
-        // 更新排名
-        _updateRanking(msg.sender, newBalance, previousBalance);
     }
 
 
