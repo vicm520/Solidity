@@ -49,7 +49,7 @@ contract Bank {
         
         // 检查用户是否已经在排名中
         for (uint i = 0; i < 3; i++) {
-            if (topThreeDepositors[i] == depositor) {
+            if (firstThreeDepositors[i] == depositor) {
                 isInRanking = true;
                 currentIndex = i;
                 break;
@@ -79,9 +79,9 @@ contract Bank {
         
         // 将后面的元素前移
         for (uint i = index; i < 2; i++) {
-            topThreeDepositors[i] = topThreeDepositors[i + 1];
+            firstThreeDepositors[i] = firstThreeDepositors[i + 1];
         }
-        topThreeDepositors[2] = address(0);
+        firstThreeDepositors[2] = address(0);
     }
     
     // 添加用户到排名
@@ -92,14 +92,14 @@ contract Bank {
         uint256 minIndex = 3;
         
         for (uint i = 0; i < 3; i++) {
-            if (topThreeDepositors[i] == address(0)) {
+            if (firstThreeDepositors[i] == address(0)) {
                 // 有空位
-                topThreeDepositors[i] = depositor;
+                firstThreeDepositors[i] = depositor;
                 _sortRanking();
                 return;
             }
             
-            uint256 currentAmount = deposits[topThreeDepositors[i]];
+            uint256 currentAmount = deposits[firstThreeDepositors[i]];
             if (currentAmount < minAmount) {
                 minIndex = i;
                 minAmount = currentAmount;
@@ -108,7 +108,7 @@ contract Bank {
         
         // 如果新金额大于排名中的最小值，替换它
         if (minIndex < 3) {
-            topThreeDepositors[minIndex] = depositor;
+            firstThreeDepositors[minIndex] = depositor;
             _sortRanking();
         }
     }
@@ -117,8 +117,8 @@ contract Bank {
     function _sortRanking() internal {
         for (uint i = 0; i < 2; i++) {
             for (uint j = 0; j < 2 - i; j++) {
-                address addr1 = topThreeDepositors[j];
-                address addr2 = topThreeDepositors[j + 1];
+                address addr1 = firstThreeDepositors[j];
+                address addr2 = firstThreeDepositors[j + 1];
                 
                 // 处理空地址情况
                 uint256 amount1 = addr1 == address(0) ? 0 : deposits[addr1];
@@ -126,9 +126,9 @@ contract Bank {
                 
                 if (amount1 < amount2) {
                     // 交换位置
-                    address temp = topThreeDepositors[j];
-                    topThreeDepositors[j] = topThreeDepositors[j + 1];
-                    topThreeDepositors[j + 1] = temp;
+                    address temp = firstThreeDepositors[j];
+                    firstThreeDepositors[j] = firstThreeDepositors[j + 1];
+                    firstThreeDepositors[j + 1] = temp;
                 }
             }
         }
@@ -168,7 +168,7 @@ contract Bank {
     // 获取完整的排名信息（地址和金额）
     function getTopThreeWithAmounts() external view returns (address[3] memory addresses, uint256[3] memory amounts) {
         for (uint i = 0; i < 3; i++) {
-            addresses[i] = topThreeDepositors[i];
+            addresses[i] = firstThreeDepositors[i];
             if (addresses[i] != address(0)) {
                 amounts[i] = deposits[addresses[i]];
             }
@@ -199,6 +199,5 @@ contract BigBank is Bank {
     } 
 
 }
-
 
 
